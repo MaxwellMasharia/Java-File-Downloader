@@ -1,3 +1,4 @@
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
@@ -11,6 +12,7 @@ public class Server {
     private static final String ROOT = "src/web/index.html";
     private static final String ROOT_CSS = "src/web/style.css";
     private static final String ROOT_JS = "src/web/app.js";
+    private static final String DOWNLOADS = "src/downloads";
 
     private static int getFileSize(String fileName) {
         return (int) new File(fileName).length();
@@ -46,11 +48,46 @@ public class Server {
         dataOut.close();
     }
 
+    private static void startFileDownload(HttpExchange httpExchange) {
+        File file = new File(DOWNLOADS);
+        File[] files = file.listFiles();
+        if (files != null) {
+            for (File fl : files) {
+                sendFile(httpExchange, fl);
+            }
+        }
+    }
+
+    private static void sendFile(HttpExchange httpExchange, File fl) {
+        new Thread(() -> {
+            try {
+                // Send the Headers
+                Headers responseHeaders = httpExchange.getResponseHeaders();
+                responseHeaders.add("Content-Disposition", "attachment; filename=\"" + fl.getName() + "\"");
+                httpExchange.sendResponseHeaders(200, fl.length());
+
+                // Send the File
+                OutputStream dataTo = httpExchange.getResponseBody();
+                FileInputStream dataFrom = new FileInputStream(fl);
+                BufferedPipeStream bufferedPipeStream = new BufferedPipeStream(dataFrom, dataTo, (int) fl.length());
+                bufferedPipeStream.transfer();
+
+                // close the Steams
+                dataTo.close();
+                dataFrom.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
     public static void main(String[] args) throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(4040), 0);
         server.createContext("/", httpExchange -> sendRequestedFile(httpExchange, ROOT));
         server.createContext("/app.js", httpExchange -> sendRequestedFile(httpExchange, ROOT_JS));
         server.createContext("/style.css", httpExchange -> sendRequestedFile(httpExchange, ROOT_CSS));
+        server.createContext("/downloads", Server::startFileDownload);
 
 
         server.start();
