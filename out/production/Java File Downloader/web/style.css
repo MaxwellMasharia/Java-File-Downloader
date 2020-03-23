@@ -1,0 +1,35 @@
+* {
+  padding: 0px;
+  margin: 0px;
+  box-sizing: border-box;
+}
+
+body,
+html {
+  min-height: 100vh;
+}
+
+body {
+  background: rgba(0,125,125,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button {
+  background: rgb(0,130,130);
+  padding: 0.5rem 1.0rem;
+  border-radius: 4px;
+  transition: background 300ms ease-in-out;
+}
+
+.button span {
+  color: #fff;
+  font-size: 1.2rem;
+  font-family: Sen;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: rgb(0,100,100);
+}
